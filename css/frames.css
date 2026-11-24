@@ -1,0 +1,382 @@
+.frames-page {
+  min-height: 70vh;
+  padding: 48px 32px 96px;
+}
+
+.frames-heading {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  border-bottom: var(--line-ink);
+  padding-bottom: 24px;
+}
+
+.frames-heading .technical-label {
+  grid-column: 1 / -1;
+  margin-bottom: 12px;
+}
+
+.frames-heading h1 {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: clamp(52px, 7vw, 88px);
+  line-height: 0.9;
+  letter-spacing: -0.07em;
+}
+
+.frames-count {
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.frames-toolbar {
+  display: grid;
+  grid-template-columns: 110px minmax(180px, 380px) 90px 220px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: var(--line-ui);
+  padding: 16px 0;
+  font-size: var(--text-small);
+  font-weight: 700;
+}
+
+.frames-toolbar input,
+.frames-toolbar select {
+  min-height: 44px;
+  width: 100%;
+  border: var(--line-ink);
+  border-radius: 0;
+  background: var(--color-white);
+  padding: 8px 10px;
+}
+
+.frames-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-left: var(--line-ink);
+  border-top: var(--line-ink);
+  margin-top: 32px;
+}
+
+.frame-card {
+  min-width: 0;
+  border-right: var(--line-ink);
+  border-bottom: var(--line-ink);
+  background: var(--color-white);
+  padding: 16px;
+  animation: frame-sway 5.2s ease-in-out infinite;
+  transform-origin: 50% 62%;
+  transition: box-shadow 220ms ease, background-color 220ms ease;
+}
+
+.frame-card:nth-child(3n + 2) { animation-delay: -1.7s; }
+.frame-card:nth-child(3n) { animation-delay: -3.1s; }
+
+.frame-card:hover {
+  z-index: 2;
+  animation-play-state: paused;
+  box-shadow: 8px 10px 0 rgba(41,37,42,.14);
+}
+
+@keyframes frame-sway {
+  0%, 100% { transform: translateY(0) rotate(-.35deg); }
+  50% { transform: translateY(-4px) rotate(.55deg); }
+}
+
+.frame-preview {
+  position: relative;
+  height: 310px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 7px;
+  overflow: hidden;
+  background: var(--frame-bg);
+  border: var(--line-ink);
+  padding: 12px 12px 38px;
+  isolation: isolate;
+}
+
+.frame-preview::before,
+.frame-preview::after {
+  position: absolute;
+  z-index: 2;
+  width: 15px;
+  height: 15px;
+  background: var(--frame-accent);
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+}
+
+.frame-preview::before { top: 16px; right: 16px; }
+.frame-preview::after { bottom: 42px; left: 17px; width: 9px; height: 9px; }
+
+.frame-card:hover .frame-preview::before,
+.frame-card:hover .frame-preview::after {
+  animation: sparkle 900ms ease-in-out infinite alternate;
+  opacity: .9;
+}
+
+@keyframes sparkle {
+  from { transform: scale(.55) rotate(0); filter: brightness(1); }
+  to { transform: scale(1.15) rotate(45deg); filter: brightness(1.45); }
+}
+
+.frame-slot {
+  min-height: 48px;
+  border: 1px solid rgba(41,37,42,.24);
+  background:
+    linear-gradient(145deg, rgba(140,133,136,.42) 0 35%, rgba(242,221,228,.78) 35% 65%, rgba(234,229,242,.92) 65%);
+}
+
+.frame-art {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.frame-card--strip .frame-preview {
+  grid-template-columns: 1fr;
+  width: 55%;
+  min-width: 145px;
+  margin-inline: auto;
+}
+
+.frame-card--single .frame-preview { grid-template-columns: 1fr; }
+.frame-card--vertical .frame-preview { grid-template-columns: 1fr; }
+.frame-card--grid .frame-preview { grid-template-columns: repeat(2, 1fr); }
+.frame-card--ticket .frame-preview {
+  border-style: dashed;
+  grid-template-columns: 1fr;
+  width: 72%;
+  margin-inline: auto;
+}
+.frame-card--film .frame-slot,
+.frame-card--rounded-grid .frame-slot { border-radius: 16px 16px 2px 2px; }
+.frame-card--contact .frame-preview {
+  grid-template-columns: repeat(2, 1fr);
+  background: var(--color-ink);
+}
+.frame-card--contact .frame-slot { background: #D8CCD2; }
+
+.frame-number {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  color: var(--frame-accent);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.frame-ornaments {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  justify-content: space-around;
+  pointer-events: none;
+}
+
+.frame-ornaments i {
+  position: relative;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  opacity: .5;
+}
+
+.frame-ornaments i:nth-child(2) { top: 9px; }
+.frame-ornaments i:nth-child(3) { top: 18px; }
+
+.frame-card--christmas .frame-preview {
+  background-image:
+    radial-gradient(circle at 8% 8%, #fff 0 2px, transparent 3px),
+    radial-gradient(circle at 92% 18%, #fff 0 2px, transparent 3px),
+    radial-gradient(circle at 12% 66%, #fff 0 2px, transparent 3px),
+    radial-gradient(circle at 88% 82%, #fff 0 2px, transparent 3px);
+  background-color: var(--frame-bg);
+}
+
+.frame-card--christmas .frame-ornaments i {
+  background: repeating-linear-gradient(180deg, transparent 0 18px, var(--frame-accent) 19px 22px, transparent 23px 34px);
+  opacity: .35;
+}
+
+.frame-card--holly .frame-ornaments i,
+.frame-card--pine .frame-ornaments i,
+.frame-card--wreath .frame-ornaments i {
+  background: repeating-linear-gradient(135deg, transparent 0 8px, #2C7250 9px 13px, transparent 14px 19px);
+}
+
+.frame-card--ornament .frame-ornaments i {
+  height: 34px;
+  border-inline: 1px solid var(--frame-accent);
+  border-radius: 0 0 50% 50%;
+}
+
+.frame-card--ornament .frame-ornaments i::after {
+  position: absolute;
+  top: 28px;
+  left: -5px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--frame-accent);
+  border-radius: 50%;
+  background: #A94761;
+  content: "";
+}
+
+.frame-card--candy .frame-preview {
+  background-image: repeating-linear-gradient(135deg, transparent 0 14px, rgba(181,43,59,.12) 15px 20px);
+}
+
+.frame-card--stars .frame-ornaments i,
+.frame-card--ice .frame-ornaments i {
+  width: 12px;
+  background: repeating-linear-gradient(180deg, transparent 0 28px, var(--frame-accent) 29px 31px, transparent 32px 50px);
+}
+
+.frame-card--gift .frame-preview::before,
+.frame-card--envelope .frame-preview::before {
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  opacity: .9;
+}
+
+.frame-card--cocoa .frame-ornaments i,
+.frame-card--apricot .frame-ornaments i,
+.frame-card--peach .frame-ornaments i,
+.frame-card--citrus .frame-ornaments i {
+  width: 100%;
+  height: 5px;
+  top: 18px;
+  border-radius: 50%;
+  background: var(--frame-accent);
+  opacity: .6;
+}
+
+.frame-card--peach .frame-ornaments i,
+.frame-card--apricot .frame-ornaments i {
+  background: radial-gradient(circle, #D97682 0 3px, transparent 4px) 0 0 / 24px 24px;
+}
+
+.frame-card--lunar-new-year .frame-preview {
+  background-image:
+    radial-gradient(circle at 12% 12%, rgba(255,255,255,.55) 0 2px, transparent 3px),
+    radial-gradient(circle at 88% 76%, rgba(255,255,255,.55) 0 2px, transparent 3px);
+}
+
+.frame-card--lantern .frame-ornaments i {
+  width: 24px;
+  height: 48px;
+  margin-inline: 10px;
+  border: 2px solid var(--frame-accent);
+  border-radius: 50% 50% 40% 40%;
+}
+
+.frame-card--lantern .frame-ornaments i::after {
+  position: absolute;
+  top: 46px;
+  left: 9px;
+  width: 2px;
+  height: 18px;
+  background: var(--frame-accent);
+  content: "";
+}
+
+.frame-card--banh-chung .frame-ornaments i {
+  width: 30%;
+  height: 30%;
+  top: 35%;
+  border: 2px solid var(--frame-accent);
+  transform: rotate(45deg);
+}
+
+.frame-card--calligraphy .frame-ornaments i {
+  width: 2px;
+  background: var(--frame-accent);
+  transform: rotate(16deg);
+}
+
+.frame-card--clouds .frame-ornaments i {
+  height: 28px;
+  border-top: 2px solid var(--frame-accent);
+  border-radius: 50%;
+}
+
+.frame-card--firecracker .frame-ornaments i {
+  width: 10px;
+  height: 64px;
+  border: 1px solid var(--frame-accent);
+  background: repeating-linear-gradient(180deg, transparent 0 8px, var(--frame-accent) 9px 10px);
+}
+
+.frame-card--fan .frame-ornaments i {
+  width: 33%;
+  height: 34%;
+  top: 7%;
+  border: 1px solid var(--frame-accent);
+  border-radius: 100% 0 0;
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame-card { animation: none; }
+  .frame-card:hover .frame-preview::before,
+  .frame-card:hover .frame-preview::after { animation: none; }
+}
+
+.frame-card-info {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+.frame-card-info h3 {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 21px;
+  line-height: 1.1;
+}
+
+.frame-card-info .technical-label {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  color: #625A60;
+  font-size: 9px;
+}
+
+.favorite-button {
+  min-height: 44px;
+  border: var(--line-ink);
+  border-radius: 0;
+  background: var(--color-paper);
+  padding: 8px 10px;
+  font-size: var(--text-small);
+  font-weight: 800;
+}
+
+.favorite-button[aria-pressed="true"] {
+  background: var(--color-pink);
+  box-shadow: inset 0 -3px var(--color-accent);
+}
+
+.frames-empty {
+  grid-column: 1 / -1;
+  border-right: var(--line-ink);
+  border-bottom: var(--line-ink);
+  padding: 64px 24px;
+  text-align: center;
+}

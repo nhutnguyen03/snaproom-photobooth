@@ -1,0 +1,23 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# Local configuration and logs
+.env
+.env.*
+!.env.example
+*.log
+
+# Generated output and dependencies
+node_modules/
+dist/
+coverage/
+
+# Local design notes and prototypes (not part of the website release)
+/DESIGN_SYSTEM.md
+/DEVELOPMENT_STATUS.md
+/design-directions.html
+/snaproom-khung-anh-noel-tet.html
