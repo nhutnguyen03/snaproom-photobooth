@@ -319,26 +319,25 @@ function drawCover(context, bitmap, slot, photoEdit = {}) {
   const scale = Math.max(slot.width / bitmap.width, slot.height / bitmap.height);
   const sourceWidth = slot.width / scale;
   const sourceHeight = slot.height / scale;
-  const sourceX = (bitmap.width - sourceWidth) / 2;
-  const sourceY = (bitmap.height - sourceHeight) / 2;
   const zoom = Math.max(1, Number(photoEdit.zoom || 1));
-  const drawWidth = slot.width * zoom;
-  const drawHeight = slot.height * zoom;
-  const offsetX = (drawWidth - slot.width) * (Number(photoEdit.positionX || 50) / 100);
-  const offsetY = (drawHeight - slot.height) * (Number(photoEdit.positionY || 50) / 100);
+  const cropWidth = sourceWidth / zoom;
+  const cropHeight = sourceHeight / zoom;
+  const positionX = Math.min(100, Math.max(0, Number(photoEdit.positionX ?? 50))) / 100;
+  const positionY = Math.min(100, Math.max(0, Number(photoEdit.positionY ?? 50))) / 100;
+  const sourceX = (bitmap.width - cropWidth) * positionX;
+  const sourceY = (bitmap.height - cropHeight) * positionY;
   context.save();
   context.translate(slot.x + slot.width / 2, slot.y + slot.height / 2);
   context.rotate((Number(photoEdit.rotate || 0) * Math.PI) / 180);
   context.scale(photoEdit.flipX ? -1 : 1, photoEdit.flipY ? -1 : 1);
-  context.translate(-slot.x - slot.width / 2 - offsetX, -slot.y - slot.height / 2 - offsetY);
   context.drawImage(
     bitmap,
     sourceX,
     sourceY,
-    sourceWidth,
-    sourceHeight,
-    slot.x,
-    slot.y,
+    cropWidth,
+    cropHeight,
+    -slot.width / 2,
+    -slot.height / 2,
     slot.width,
     slot.height
   );

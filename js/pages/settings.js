@@ -95,22 +95,27 @@ export function renderSettings() {
   dataSection.append(clearButton);
 
   const sectionMap = [
-    ["camera", "Camera", cameraSection],
-    ["export", "Xuất ảnh", exportSection],
-    ["storage", "Bộ nhớ", storageSection],
-    ["privacy", "Riêng tư", privacySection],
-    ["backup", "Sao lưu", backupSection],
-    ["data", "Dữ liệu", dataSection]
+    ["camera", "Camera", cameraSection, "M12 3v18m-6-6 6 6 6-6M5 5h14"],
+    ["export", "Xuất ảnh", exportSection, "M12 3v12m-5-5 5 5 5-5M4 19h16"],
+    ["storage", "Bộ nhớ", storageSection, "M4 7h16v13H4zM4 7l2-4h12l2 4M8 11h8"],
+    ["privacy", "Riêng tư", privacySection, "M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6l-7-3Zm-3 9 2 2 4-4"],
+    ["backup", "Sao lưu", backupSection, "M12 16V4m-5 5 5-5 5 5M4 16v4h16v-4"],
+    ["data", "Dữ liệu", dataSection, "M4 7h16m-14 0 1 14h10l1-14M9 7V4h6v3m-5 4v6m4-6v6"]
   ];
 
-  for (const [id, text, section] of sectionMap) {
+  for (const [id, text, section, iconPath] of sectionMap) {
     const link = document.createElement("button");
     link.type = "button";
     link.dataset.target = id;
-    link.textContent = text;
+    link.append(createSettingsIcon(iconPath), document.createTextNode(text));
     link.classList.toggle("active", id === "camera");
+    link.setAttribute("aria-controls", `${id}-settings-panel`);
+    link.setAttribute("aria-pressed", String(id === "camera"));
     nav.append(link);
     section.dataset.sectionId = id;
+    section.id = `${id}-settings-panel`;
+    section.hidden = id !== "camera";
+    section.setAttribute("aria-label", text);
   }
 
   main.append(cameraSection, exportSection, storageSection, privacySection, backupSection, dataSection);
@@ -120,9 +125,14 @@ export function renderSettings() {
   nav.addEventListener("click", (event) => {
     const button = event.target.closest("[data-target]");
     if (!button) return;
-    for (const peer of nav.querySelectorAll("[data-target]")) peer.classList.toggle("active", peer === button);
-    const target = main.querySelector(`[data-section-id="${button.dataset.target}"]`);
-    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    for (const peer of nav.querySelectorAll("[data-target]")) {
+      const active = peer === button;
+      peer.classList.toggle("active", active);
+      peer.setAttribute("aria-pressed", String(active));
+    }
+    for (const section of main.querySelectorAll("[data-section-id]")) {
+      section.hidden = section.dataset.sectionId !== button.dataset.target;
+    }
   });
 
   for (const input of main.querySelectorAll("[data-setting-key]")) {
@@ -276,7 +286,7 @@ function createSelectSetting(labelText, key, options, selected) {
   const row = document.createElement("label");
   row.className = "settings-row";
   const label = document.createElement("span");
-  label.textContent = labelText;
+  label.append(createSettingsIcon(settingIconPath(key)), document.createTextNode(labelText));
   const select = document.createElement("select");
   select.dataset.settingKey = key;
   for (const [value, text] of options) {
@@ -297,7 +307,7 @@ function createCheckboxSetting(labelText, key, checked) {
   input.type = "checkbox";
   input.dataset.settingKey = key;
   input.checked = checked;
-  row.append(input, document.createTextNode(labelText));
+  row.append(input, createSettingsIcon("M3 12h18m-5-5 5 5-5 5"), document.createTextNode(labelText));
   return row;
 }
 
@@ -305,7 +315,7 @@ function createRangeSetting(labelText, key, value, min, max) {
   const row = document.createElement("label");
   row.className = "settings-range";
   const label = document.createElement("span");
-  label.textContent = labelText;
+  label.append(createSettingsIcon("M12 3v18M5 8h14M5 16h14"), document.createTextNode(labelText));
   const input = document.createElement("input");
   input.type = "range";
   input.min = String(min);
@@ -323,6 +333,29 @@ function formatBytes(bytes) {
   const units = ["B", "KB", "MB", "GB", "TB"];
   const index = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
   return `${(bytes / (1024 ** index)).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
+}
+
+function settingIconPath(key) {
+  const paths = {
+    camera: "M4 7h4l2-3h4l2 3h4v13H4zM12 10a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z",
+    aspect: "M4 4h16v16H4zM4 10h16",
+    countdown: "M12 7v5l3 2M9 2h6m-3 0v3m7 1 2-2",
+    shotCount: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
+    exportFormat: "M4 5h16v14H4zM8 9h8m-8 4h8",
+    exportQuality: "M4 12h16M8 8l-4 4 4 4m8-8 4 4-4 4"
+  };
+  return paths[key] || "M4 4h16v16H4z";
+}
+
+function createSettingsIcon(pathData) {
+  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  icon.classList.add("settings-icon");
+  icon.setAttribute("viewBox", "0 0 24 24");
+  icon.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", pathData);
+  icon.append(path);
+  return icon;
 }
 
 function openConfirmDialog(titleText, descriptionText, onConfirm) {

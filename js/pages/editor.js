@@ -11,15 +11,6 @@ export function renderEditor() {
   const page = document.createElement("section");
   page.className = "editor-page";
 
-  const heading = document.createElement("header");
-  heading.className = "editor-heading";
-  const label = document.createElement("p");
-  label.className = "technical-label";
-  label.textContent = "EDITOR / creative tools";
-  const title = document.createElement("h1");
-  title.textContent = "Chỉnh khoảnh khắc.";
-  heading.append(label, title);
-
   const board = document.createElement("div");
   board.className = "editor-board";
 
@@ -45,7 +36,33 @@ export function renderEditor() {
 
   const tools = document.createElement("aside");
   tools.className = "editor-tools";
-  tools.append(createFilterSection(), createAdjustSection(), createLayoutSection(), createFrameSection());
+  const toolNav = document.createElement("nav");
+  toolNav.className = "editor-tool-nav";
+  toolNav.setAttribute("aria-label", "Công cụ chỉnh sửa");
+  const panels = [
+    ["filters", "Bộ lọc", "M6 3v12M18 9v12M3 9h6m6 6h6"],
+    ["adjust", "Điều chỉnh", "M12 3v18M5 8h14M5 16h14"],
+    ["layout", "Bố cục", "M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z"],
+    ["frames", "Khung", "M4 3h16v18H4zM8 7h8v10H8z"]
+  ];
+  const panelSections = [
+    createFilterSection(),
+    createAdjustSection(),
+    createLayoutSection(),
+    createFrameSection()
+  ];
+  panelSections.forEach((section, index) => {
+    const [id, labelText, iconPath] = panels[index];
+    section.dataset.editorPanel = id;
+    section.hidden = id !== "adjust";
+    section.id = `${id}-panel`;
+    const button = createEditorTab(id, labelText, iconPath);
+    button.setAttribute("aria-controls", section.id);
+    button.setAttribute("aria-pressed", String(id === "adjust"));
+    toolNav.append(button);
+    tools.append(section);
+  });
+  tools.prepend(toolNav);
 
   board.append(artRail, canvasArea, tools);
 
@@ -63,7 +80,21 @@ export function renderEditor() {
   status.className = "editor-status";
   actions.append(saveButton, exportButton, status);
 
-  page.append(heading, board, actions);
+  page.append(board, actions);
+
+  toolNav.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-editor-tab]");
+    if (!button) return;
+    const activePanel = button.dataset.editorTab;
+    for (const peer of toolNav.querySelectorAll("[data-editor-tab]")) {
+      const active = peer === button;
+      peer.classList.toggle("active", active);
+      peer.setAttribute("aria-pressed", String(active));
+    }
+    for (const panel of tools.querySelectorAll("[data-editor-panel]")) {
+      panel.hidden = panel.dataset.editorPanel !== activePanel;
+    }
+  });
 
   let project = null;
   let frame = frames[0];
@@ -143,14 +174,18 @@ export function renderEditor() {
 
   function applySavedUi() {
     for (const presetButton of tools.querySelectorAll("[data-filter-id]")) {
-      presetButton.classList.toggle("active", presetButton.dataset.filterId === state.filter);
+      const active = presetButton.dataset.filterId === state.filter;
+      presetButton.classList.toggle("active", active);
+      presetButton.setAttribute("aria-pressed", String(active));
     }
     for (const slider of tools.querySelectorAll("[data-adjustment]")) {
       slider.value = String(state.adjustments[slider.dataset.adjustment] ?? slider.defaultValue);
       updateAdjustmentLabel(slider);
     }
     for (const layoutButton of tools.querySelectorAll("[data-layout]")) {
-      layoutButton.classList.toggle("active", layoutButton.dataset.layout === state.layout);
+      const active = layoutButton.dataset.layout === state.layout;
+      layoutButton.classList.toggle("active", active);
+      layoutButton.setAttribute("aria-pressed", String(active));
     }
     for (const frameButton of tools.querySelectorAll("[data-frame-id]")) {
       const active = frameButton.dataset.frameId === frame.id;
@@ -473,8 +508,18 @@ function createFilterSection() {
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.filterId = filter.id;
-    button.textContent = filter.name;
-    button.style.setProperty("--filter-preview", buildCssFilter(filter.values));
+    button.setAttribute("aria-label", filter.name);
+    button.setAttribute("aria-pressed", "false");
+    const preview = document.createElement("span");
+    preview.className = "editor-filter-preview";
+    preview.style.filter = buildCssFilter(filter.values);
+    const image = document.createElement("span");
+    image.className = "editor-preview-landscape";
+    preview.append(image);
+    const label = document.createElement("span");
+    label.className = "editor-option-label";
+    label.textContent = filter.name;
+    button.append(preview, label);
     grid.append(button);
   }
   section.append(title, grid);
@@ -500,7 +545,7 @@ function createAdjustSection() {
   for (const [key, labelText, value, min, max] of adjustments) {
     const row = document.createElement("label");
     row.className = "editor-range";
-    row.append(document.createTextNode(labelText));
+    row.append(createIcon(key), document.createTextNode(labelText));
     const input = document.createElement("input");
     input.type = "range";
     input.min = String(min);
@@ -527,7 +572,7 @@ function createAdjustSection() {
   ]) {
     const row = document.createElement("label");
     row.className = "editor-range";
-    row.append(document.createTextNode(labelText));
+    row.append(createIcon(key), document.createTextNode(labelText));
     const input = document.createElement("input");
     input.type = "range";
     input.min = String(min);
@@ -566,7 +611,19 @@ function createLayoutSection() {
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.layout = layout.id;
-    button.textContent = layout.name;
+    button.setAttribute("aria-label", layout.name);
+    button.setAttribute("aria-pressed", "false");
+    const preview = document.createElement("span");
+    preview.className = `editor-layout-preview layout-${layout.id}`;
+    const count = layout.id === "single" ? 1 : layout.id === "grid-2" ? 2 : layout.id === "grid-3" ? 3 : layout.id === "grid-4" ? 4 : 4;
+    for (let index = 0; index < count; index += 1) {
+      const cell = document.createElement("span");
+      preview.append(cell);
+    }
+    const label = document.createElement("span");
+    label.className = "editor-option-label";
+    label.textContent = layout.name;
+    button.append(preview, label);
     grid.append(button);
   }
   section.append(title, grid);
@@ -577,7 +634,7 @@ function createLayoutSection() {
   ]) {
     const row = document.createElement("label");
     row.className = "editor-range";
-    row.append(document.createTextNode(labelText));
+    row.append(createIcon(key), document.createTextNode(labelText));
     const input = document.createElement("input");
     input.type = "range";
     input.min = String(min);
@@ -594,7 +651,7 @@ function createLayoutSection() {
 
   const borderRow = document.createElement("label");
   borderRow.className = "editor-check";
-  borderRow.append(document.createTextNode("Màu viền"));
+  borderRow.append(createIcon("border"), document.createTextNode("Màu viền"));
   const borderInput = document.createElement("input");
   borderInput.type = "color";
   borderInput.value = "#29252A";
@@ -616,11 +673,63 @@ function createFrameSection() {
     button.type = "button";
     button.dataset.frameId = frame.id;
     button.setAttribute("aria-pressed", "false");
-    button.textContent = frame.name;
+    button.setAttribute("aria-label", frame.name);
+    const image = document.createElement("img");
+    image.alt = "";
+    image.loading = "lazy";
+    image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(getSeasonalFrameSvg(frame.id, 4))}`;
+    const label = document.createElement("span");
+    label.className = "editor-option-label";
+    label.textContent = frame.name;
+    button.append(image, label);
     grid.append(button);
   }
   section.append(title, grid);
   return section;
+}
+
+function createEditorTab(id, labelText, iconPath) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "editor-tool-tab";
+  button.dataset.editorTab = id;
+  button.title = labelText;
+  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  icon.setAttribute("viewBox", "0 0 24 24");
+  icon.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", iconPath);
+  icon.append(path);
+  const text = document.createElement("span");
+  text.textContent = labelText;
+  button.append(icon, text);
+  return button;
+}
+
+function createIcon(name) {
+  const paths = {
+    brightness: "M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4m0-12.8L17 7M7 17l-1.4 1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+    contrast: "M12 3a9 9 0 1 0 0 18V3Zm0 0a9 9 0 0 1 0 18",
+    saturation: "M12 3s7 7.1 7 12a7 7 0 0 1-14 0c0-4.9 7-12 7-12Z",
+    warmth: "M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0ZM12 12v5",
+    exposure: "M12 3v18M5 8h14M5 16h14M8 5l-3 3 3 3m8 2 3 3-3 3",
+    blur: "M12 3s6 6.3 6 11a6 6 0 0 1-12 0c0-4.7 6-11 6-11Z",
+    vignette: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z",
+    zoom: "m15 15 5 5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0ZM10 7v6m-3-3h6",
+    positionX: "M3 12h18m-5-5 5 5-5 5M8 7l-5 5 5 5",
+    positionY: "M12 3v18m-5-5 5 5 5-5M7 8l5-5 5 5",
+    rotate: "M20 11a8 8 0 1 0 1 5m-1-12v7h-7",
+    spacing: "M4 12h16M8 8l-4 4 4 4m8-8 4 4-4 4",
+    radius: "M4 20V8a4 4 0 0 1 4-4h12"
+  };
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.classList.add("editor-control-icon");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", paths[name] || "M4 4h16v16H4z");
+  svg.append(path);
+  return svg;
 }
 
 function updateAdjustmentLabel(input) {

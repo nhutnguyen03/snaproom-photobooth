@@ -4,6 +4,7 @@ import { compressImageBlob, createThumbnail, preferredCaptureMime } from "../cor
 import { composeFrame, canvasToBlob as exportToBlob } from "../core/export-engine.js";
 import { getSettings, saveSettings } from "../services/settings-service.js";
 import { putPhoto, putProject } from "../services/database.js";
+import { getSeasonalFrameSvg } from "../data/seasonal-frame-art.js";
 
 export function renderBooth() {
   const settings = getSettings();
@@ -13,13 +14,6 @@ export function renderBooth() {
   const page = document.createElement("section");
   page.className = "booth-page";
 
-  const heading = document.createElement("header");
-  heading.className = "booth-heading";
-  const label = document.createElement("p");
-  label.className = "technical-label";
-  label.textContent = "PHOTBOOTH / session";
-  const title = document.createElement("h1");
-  title.textContent = "Bước vào phòng chụp.";
   const fullscreenToggle = document.createElement("button");
   fullscreenToggle.className = "booth-fullscreen-toggle";
   fullscreenToggle.type = "button";
@@ -37,9 +31,9 @@ export function renderBooth() {
   fullscreenIconPath.setAttribute("stroke-linejoin", "round");
   fullscreenIcon.append(fullscreenIconPath);
   const fullscreenLabel = document.createElement("span");
+  fullscreenLabel.className = "sr-only";
   fullscreenLabel.textContent = "Toàn màn hình";
   fullscreenToggle.append(fullscreenIcon, fullscreenLabel);
-  heading.append(label, title, fullscreenToggle);
 
   const board = document.createElement("div");
   board.className = "booth-board";
@@ -56,6 +50,10 @@ export function renderBooth() {
   video.setAttribute("aria-label", "Xem trước camera");
   const cropGuide = document.createElement("div");
   cropGuide.className = "crop-guide";
+  const frameOverlay = document.createElement("img");
+  frameOverlay.className = "camera-frame-overlay";
+  frameOverlay.alt = "";
+  frameOverlay.setAttribute("aria-hidden", "true");
   const countdown = document.createElement("p");
   countdown.className = "countdown";
   countdown.setAttribute("aria-live", "assertive");
@@ -65,37 +63,34 @@ export function renderBooth() {
   stageStatus.textContent = "Camera chưa bật.";
   stageStatus.setAttribute("role", "status");
   stageStatus.setAttribute("aria-live", "polite");
-  videoShell.append(video, cropGuide, countdown, stageStatus);
+  const cameraOverlay = document.createElement("div");
+  cameraOverlay.className = "camera-overlay-controls";
+  cameraOverlay.setAttribute("aria-label", "Điều khiển camera");
+  const startButton = createCameraIconButton(
+    "Bật camera",
+    "M4 7h4l2-3h4l2 3h4v13H4zM12 10a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"
+  );
+  startButton.classList.add("camera-start-button");
+  const switchButton = createCameraIconButton(
+    "Đổi camera trước/sau",
+    "M20 7h-5l2-2m-2 2 2 2M4 17h5l-2 2m2-2-2-2M5 8a7 7 0 0 1 11-2m3 10a7 7 0 0 1-11 2"
+  );
+  switchButton.disabled = true;
+  const torchButton = createCameraIconButton(
+    "Bật đèn",
+    "M13 2 5 13h6l-1 9 9-12h-6l1-8Z"
+  );
+  torchButton.disabled = true;
+  const aspectValues = ["1:1", "4:5", "3:4", "2:3", "9:16", "16:9"];
+  const aspectButton = createAspectButton();
+  const aspectShape = aspectButton.querySelector("rect");
+  cameraOverlay.append(startButton, switchButton, torchButton, aspectButton);
   stage.append(videoShell);
+  videoShell.append(video, frameOverlay, cropGuide, countdown, stageStatus);
 
   const tools = document.createElement("aside");
   tools.className = "booth-tools";
   tools.id = "booth-tools-panel";
-
-  const cameraSection = createToolSection("01 / Camera");
-  cameraSection.classList.add("camera-controls");
-  const permissionCopy = document.createElement("p");
-  permissionCopy.className = "tool-copy";
-  permissionCopy.textContent = "Camera chỉ bật sau khi bạn nhấn nút. Hình ảnh không rời thiết bị.";
-
-  const startButton = document.createElement("button");
-  startButton.className = "tool-button tool-button-primary";
-  startButton.type = "button";
-  startButton.textContent = "Bật camera";
-
-  const cameraRow = document.createElement("div");
-  cameraRow.className = "tool-row";
-  const switchButton = document.createElement("button");
-  switchButton.className = "tool-button";
-  switchButton.type = "button";
-  switchButton.textContent = "Đổi trước/sau";
-  switchButton.disabled = true;
-  const torchButton = document.createElement("button");
-  torchButton.className = "tool-button";
-  torchButton.type = "button";
-  torchButton.textContent = "Đèn";
-  torchButton.disabled = true;
-  cameraRow.append(switchButton, torchButton);
 
   const cameraDeviceSelect = document.createElement("select");
   cameraDeviceSelect.id = "booth-camera-device";
@@ -106,34 +101,41 @@ export function renderBooth() {
   cameraDeviceLabel.textContent = "Nguồn camera";
   cameraDeviceLabel.hidden = true;
   cameraDeviceLabel.append(cameraDeviceSelect);
-  cameraSection.append(permissionCopy, startButton, cameraRow, cameraDeviceLabel);
+  cameraOverlay.append(cameraDeviceLabel);
 
   const frameSection = createToolSection("02 / Khung");
   frameSection.classList.add("frame-controls");
-  const frameSelect = document.createElement("select");
-  frameSelect.id = "booth-frame";
-  frameSelect.setAttribute("aria-label", "Chọn khung");
+  const frameTrack = document.createElement("div");
+  frameTrack.className = "booth-frame-track";
+  frameTrack.setAttribute("role", "group");
+  frameTrack.setAttribute("aria-label", "Chọn khung ảnh");
   for (const frame of frames) {
-    const option = document.createElement("option");
-    option.value = frame.id;
-    option.textContent = `${frame.name} · 1–4 ảnh`;
-    option.selected = frame.id === selectedFrame.id;
-    frameSelect.append(option);
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "booth-frame-option";
+    option.dataset.frameId = frame.id;
+    option.setAttribute("aria-pressed", String(frame.id === selectedFrame.id));
+    option.setAttribute("aria-label", frame.name);
+    const image = document.createElement("img");
+    image.alt = "";
+    image.loading = "lazy";
+    image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(getSeasonalFrameSvg(frame.id, 4))}`;
+    const name = document.createElement("span");
+    name.textContent = frame.name;
+    option.append(image, name);
+    frameTrack.append(option);
   }
-  frameSection.append(frameSelect);
+  frameSection.append(frameTrack);
 
   const sessionSection = createToolSection("03 / Phiên chụp");
   sessionSection.classList.add("session-controls");
   const shotCountLabel = createSelectControl("Số ảnh", "booth-shot-count", [1, 2, 3, 4, 6, 8], settings.shotCount);
   const countdownLabel = createSelectControl("Đếm ngược", "booth-countdown", [0, 3, 5, 10], settings.countdown);
   const intervalLabel = createSelectControl("Khoảng cách", "booth-interval", [1, 2, 3, 5], settings.interval);
-  const aspectLabel = createSegmentedControl("Tỷ lệ", "booth-aspect", ["1:1", "4:5", "3:4", "2:3", "9:16", "16:9"], settings.aspect);
   sessionSection.append(
     createSessionField(shotCountLabel),
     createSessionField(countdownLabel),
-    createSessionField(intervalLabel),
-    aspectLabel.label,
-    aspectLabel.control
+    createSessionField(intervalLabel)
   );
 
   const actionSection = createToolSection("04 / Kết quả");
@@ -147,17 +149,28 @@ export function renderBooth() {
   const captureProgress = document.createElement("p");
   captureProgress.className = "technical-label capture-progress";
   captureProgress.textContent = "0 / 0 ảnh";
-  actionSection.append(captureProgress);
-  actionSection.append(captureButton);
+  actionSection.append(cameraOverlay, captureProgress, captureButton);
 
-  tools.append(cameraSection, frameSection, sessionSection);
+  tools.append(frameSection, sessionSection);
 
   const settingsToggle = document.createElement("button");
   settingsToggle.className = "booth-settings-toggle";
   settingsToggle.type = "button";
-  settingsToggle.textContent = "Thu gọn thông số";
+  settingsToggle.setAttribute("aria-label", "Thu gọn thông số");
   settingsToggle.setAttribute("aria-expanded", "true");
   settingsToggle.setAttribute("aria-controls", tools.id);
+  const settingsIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  settingsIcon.classList.add("booth-settings-icon");
+  settingsIcon.setAttribute("viewBox", "0 0 24 24");
+  settingsIcon.setAttribute("aria-hidden", "true");
+  const settingsIconPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  settingsIconPath.setAttribute("d", "M5 15 12 8l7 7");
+  settingsIcon.append(settingsIconPath);
+  const settingsLabel = document.createElement("span");
+  settingsLabel.className = "sr-only";
+  settingsLabel.textContent = "Thu gọn thông số";
+  settingsToggle.append(settingsIcon, settingsLabel);
+  actionSection.append(settingsToggle);
 
   const review = document.createElement("section");
   review.className = "booth-review";
@@ -189,16 +202,19 @@ export function renderBooth() {
   speaker.className = "phone-speaker";
   const cameraDot = document.createElement("span");
   cameraDot.className = "phone-camera-dot";
-  hardware.append(speaker, cameraDot);
+  hardware.append(speaker, cameraDot, fullscreenToggle);
   const homeIndicator = document.createElement("div");
   homeIndicator.className = "phone-home-indicator";
   homeIndicator.setAttribute("aria-hidden", "true");
-  phone.append(hardware, settingsToggle, stage, tools, actionSection, homeIndicator);
+  phone.append(hardware, stage, tools, actionSection, homeIndicator);
   settingsToggle.addEventListener("click", () => {
     const expanded = settingsToggle.getAttribute("aria-expanded") !== "true";
     phone.classList.toggle("settings-collapsed", !expanded);
     settingsToggle.setAttribute("aria-expanded", String(expanded));
-    settingsToggle.textContent = expanded ? "Thu gọn thông số" : "Mở thông số";
+    const labelText = expanded ? "Thu gọn thông số" : "Mở thông số";
+    settingsToggle.setAttribute("aria-label", labelText);
+    settingsLabel.textContent = labelText;
+    settingsIconPath.setAttribute("d", expanded ? "M5 15 12 8l7 7" : "M5 9 12 16l7-7");
   });
   let fallbackFullscreen = false;
 
@@ -259,7 +275,7 @@ export function renderBooth() {
   });
   document.addEventListener("fullscreenchange", handleFullscreenChange);
   board.append(phone);
-  page.append(heading, board, review);
+  page.append(board, review);
 
   const camera = new CameraEngine(video);
   let captures = [];
@@ -291,7 +307,7 @@ export function renderBooth() {
     torchButton.disabled = !("torch" in capabilities);
     torchEnabled = false;
     torchButton.classList.remove("active");
-    torchButton.textContent = "Đèn";
+    torchButton.setAttribute("aria-label", "Bật đèn");
     if (activeDeviceId) cameraDeviceSelect.value = activeDeviceId;
   }
 
@@ -312,43 +328,84 @@ export function renderBooth() {
 
   setCropAspect(settings.aspect);
 
-  function updateSelectedFrame() {
-    selectedFrame = frames.find((frame) => frame.id === frameSelect.value) || frames[0];
+  function updateAspectButton(aspect) {
+    const [widthRatio, heightRatio] = (aspectValues.includes(aspect) ? aspect : aspectValues[0])
+      .split(":")
+      .map(Number);
+    const ratio = widthRatio / heightRatio;
+    const width = Math.min(34, 28 * ratio);
+    const height = Math.min(28, 34 / ratio);
+    aspectShape.setAttribute("x", String((40 - width) / 2));
+    aspectShape.setAttribute("y", String((32 - height) / 2));
+    aspectShape.setAttribute("width", String(width));
+    aspectShape.setAttribute("height", String(height));
+    const aspectLabel = aspectButton.querySelector("text");
+    aspectLabel.textContent = aspect;
+    aspectLabel.setAttribute("font-size", width < 17 ? "5.5" : width < 21 ? "7" : "10");
+    aspectButton.setAttribute("aria-label", `Tỷ lệ ${aspect}; nhấn để đổi`);
+    aspectButton.title = `Tỷ lệ ${aspect}`;
+  }
+
+  function updateFrameOverlay() {
+    frameOverlay.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+      getSeasonalFrameSvg(selectedFrame.id, Number(shotCountLabel.control.value) || selectedFrame.slotCount)
+    )}`;
+  }
+
+  function updateSelectedFrame(frame = selectedFrame) {
+    selectedFrame = frame || frames[0];
     localStorage.setItem("snaproom-selected-frame", selectedFrame.id);
+    for (const option of frameTrack.querySelectorAll("[data-frame-id]")) {
+      const active = option.dataset.frameId === selectedFrame.id;
+      option.classList.toggle("active", active);
+      option.setAttribute("aria-pressed", String(active));
+    }
+
     const shotCountControl = shotCountLabel.control;
+    const previousCount = Number(shotCountControl.value) || Number(settings.shotCount);
     shotCountControl.replaceChildren();
+    const availableCounts = [];
     for (const value of [1, 2, 3, 4, 6, 8]) {
       if (value > selectedFrame.slotCount) continue;
+      availableCounts.push(value);
       const option = document.createElement("option");
       option.value = String(value);
       option.textContent = value === 1 ? "1 ảnh" : `${value} ảnh`;
       shotCountControl.append(option);
     }
-    shotCountControl.value = String(selectedFrame.slotCount);
-    settings.shotCount = selectedFrame.slotCount;
+    shotCountControl.value = String(
+      availableCounts.includes(previousCount) ? previousCount : selectedFrame.slotCount
+    );
+    settings.shotCount = Number(shotCountControl.value);
     saveSettings(settings);
+    updateFrameOverlay();
   }
 
-  frameSelect.addEventListener("change", updateSelectedFrame);
+  frameTrack.addEventListener("click", (event) => {
+    const option = event.target.closest("[data-frame-id]");
+    if (!option) return;
+    const frame = frames.find((item) => item.id === option.dataset.frameId);
+    if (frame) updateSelectedFrame(frame);
+  });
   updateSelectedFrame();
 
-  for (const button of aspectLabel.control.querySelectorAll("button")) {
-    button.addEventListener("click", () => {
-      for (const peer of aspectLabel.control.querySelectorAll("button")) {
-        peer.classList.toggle("active", peer === button);
-      }
-      setCropAspect(button.dataset.value);
-      settings.aspect = button.dataset.value;
-      saveSettings(settings);
-    });
-  }
+  updateAspectButton(settings.aspect);
+  aspectButton.addEventListener("click", () => {
+    const currentIndex = aspectValues.indexOf(settings.aspect);
+    settings.aspect = aspectValues[(currentIndex + 1 + aspectValues.length) % aspectValues.length];
+    setCropAspect(settings.aspect);
+    updateAspectButton(settings.aspect);
+    saveSettings(settings);
+  });
+  shotCountLabel.control.addEventListener("change", updateFrameOverlay);
 
   startButton.addEventListener("click", async () => {
     startButton.disabled = true;
     stageStatus.textContent = "Đang xin quyền camera…";
     try {
       await camera.start({ facingMode: settings.facingMode });
-      startButton.textContent = "Camera đã bật";
+      startButton.classList.add("is-active");
+      startButton.setAttribute("aria-label", "Camera đang bật");
       captureButton.disabled = false;
       switchButton.disabled = false;
       stageStatus.textContent = "Camera đã sẵn sàng.";
@@ -362,6 +419,8 @@ export function renderBooth() {
       }
     } catch (error) {
       startButton.disabled = false;
+      startButton.classList.remove("is-active");
+      startButton.setAttribute("aria-label", "Bật camera");
       stageStatus.textContent = getCameraErrorMessage(error);
     }
   });
@@ -405,8 +464,11 @@ export function renderBooth() {
     try {
       await camera.applyConstraints({ advanced: [{ torch: torchEnabled }] });
       torchButton.classList.toggle("active", torchEnabled);
-      torchButton.textContent = torchEnabled ? "Đèn đang bật" : "Đèn";
+      torchButton.setAttribute("aria-label", torchEnabled ? "Tắt đèn" : "Bật đèn");
     } catch {
+      torchEnabled = false;
+      torchButton.classList.remove("active");
+      torchButton.setAttribute("aria-label", "Bật đèn");
       torchButton.disabled = true;
       stageStatus.textContent = "Thiết bị không hỗ trợ điều khiển đèn.";
     }
@@ -604,7 +666,16 @@ export function renderBooth() {
   };
   window.addEventListener("hashchange", cleanup, { once: true });
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) camera.stop();
+    if (!document.hidden) return;
+    camera.stop();
+    videoShell.classList.remove("camera-active");
+    startButton.classList.remove("is-active");
+    startButton.setAttribute("aria-label", "Bật camera");
+    startButton.disabled = false;
+    switchButton.disabled = true;
+    torchButton.disabled = true;
+    torchButton.classList.remove("active");
+    torchButton.setAttribute("aria-label", "Bật đèn");
   });
 
   return page;
@@ -617,6 +688,40 @@ function createToolSection(title) {
   heading.textContent = title;
   section.append(heading);
   return section;
+}
+
+function createCameraIconButton(label, pathData) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "camera-icon-button";
+  button.setAttribute("aria-label", label);
+  button.title = label;
+  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  icon.setAttribute("viewBox", "0 0 24 24");
+  icon.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", pathData);
+  icon.append(path);
+  button.append(icon);
+  return button;
+}
+
+function createAspectButton() {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "camera-icon-button aspect-cycle-button";
+  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  icon.setAttribute("viewBox", "0 0 40 32");
+  icon.setAttribute("aria-hidden", "true");
+  const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  rect.setAttribute("rx", "1");
+  const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  label.setAttribute("x", "20");
+  label.setAttribute("y", "16");
+  label.textContent = "1:1";
+  icon.append(rect, label);
+  button.append(icon);
+  return button;
 }
 
 function createSelectControl(labelText, id, values, selectedValue) {
@@ -648,25 +753,6 @@ function createSessionField(setting) {
   field.className = "session-field";
   field.append(setting.label, setting.control);
   return field;
-}
-
-function createSegmentedControl(labelText, id, values, selectedValue) {
-  const label = document.createElement("p");
-  label.className = "control-label";
-  label.id = `${id}-label`;
-  label.textContent = labelText;
-  const control = document.createElement("div");
-  control.className = "segmented-control";
-  control.setAttribute("aria-labelledby", label.id);
-  for (const value of values) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.value = value;
-    button.textContent = value;
-    button.classList.toggle("active", value === selectedValue);
-    control.append(button);
-  }
-  return { label, control };
 }
 
 async function captureVideoAsBlob(video, mirror, mimeType) {

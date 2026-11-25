@@ -4,23 +4,6 @@
   padding-bottom: 64px;
 }
 
-.gallery-heading {
-  min-height: 170px;
-  display: grid;
-  align-content: end;
-  border-bottom: var(--line-ink);
-  background: var(--color-paper);
-  padding: 48px 32px 24px;
-}
-
-.gallery-heading h1 {
-  margin-top: 8px;
-  font-family: "Fraunces", Georgia, serif;
-  font-size: clamp(48px, 6vw, 76px);
-  line-height: 0.92;
-  letter-spacing: -0.06em;
-}
-
 .gallery-toolbar {
   display: grid;
   grid-template-columns: 50px minmax(160px, 300px) 70px 160px 50px auto;

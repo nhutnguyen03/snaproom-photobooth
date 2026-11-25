@@ -21,7 +21,7 @@ const mk=(fr,n)=>({win:fr.win,n,slots:layout(fr.win,n)});
 const rr=(s,r)=>Math.min(r,s.w/5,s.h/5);
 const subRect=(x,y,w,h,r=0)=>`M${x+r} ${y}H${x+w-r}A${r} ${r} 0 0 1 ${x+w} ${y+r}V${y+h-r}A${r} ${r} 0 0 1 ${x+w-r} ${y+h}H${x+r}A${r} ${r} 0 0 1 ${x} ${y+h-r}V${y+r}A${r} ${r} 0 0 1 ${x+r} ${y}Z`;
 const clipD=S=>`M0 0H${W}V${H}H0Z `+S.slots.map(s=>subRect(s.x,s.y,s.w,s.h,rr(s,S.win.r))).join(' ');
-const base=(S,fill)=>`<path fill="${fill}" fill-rule="evenodd" d="${clipD(S)}"/>`;
+const base=(S,fill)=>`<defs><mask id="frame-window-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="#fff"/>${S.slots.map(s=>`<path d="${subRect(s.x,s.y,s.w,s.h,rr(s,S.win.r))}" fill="#000"/>`).join('')}</mask></defs><rect width="${W}" height="${H}" fill="${fill}" mask="url(#frame-window-mask)"/>`;
 const outline=(x,y,w,h,r,c,sw=3,extra='')=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="none" stroke="${c}" stroke-width="${sw}" ${extra}/>`;
 const lines=(S,c,sw=3,extra='')=>S.slots.map(s=>outline(s.x,s.y,s.w,s.h,rr(s,S.win.r),c,sw,extra)).join('');
 

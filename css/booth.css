@@ -4,53 +4,22 @@
   padding-bottom: 64px;
 }
 
-.booth-heading {
-  min-height: 180px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-content: end;
-  align-items: end;
-  gap: 12px;
-  border-bottom: var(--line-ink);
-  padding: 48px 32px 24px;
-}
-
-.booth-heading .technical-label { grid-column: 1 / -1; }
-
-.booth-heading h1 {
-  grid-column: 1;
-  grid-row: 2;
-  margin-top: 8px;
-  font-family: "Fraunces", Georgia, serif;
-  font-size: clamp(48px, 6vw, 76px);
-  line-height: 0.92;
-  letter-spacing: -0.06em;
-}
-
 .booth-fullscreen-toggle {
-  grid-column: 2;
-  grid-row: 2;
-  min-height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
+  position: absolute;
+  z-index: 6;
+  top: 5px;
+  right: max(8px, env(safe-area-inset-right));
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  display: grid;
+  place-items: center;
   border: var(--line-ink);
   border-radius: 999px;
   background: var(--color-white);
   color: var(--color-ink);
-  padding: 7px 12px;
-  font-size: var(--text-small);
-  font-weight: 800;
-  white-space: nowrap;
+  padding: 6px;
   cursor: pointer;
-  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
-}
-
-.booth-fullscreen-toggle:hover {
-  transform: translateY(-1px);
-  background: var(--color-ink);
-  color: var(--color-white);
 }
 
 .booth-fullscreen-toggle:focus-visible {
@@ -81,14 +50,51 @@
 }
 
 .booth-phone-hardware {
-  height: 24px;
+  position: relative;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
 }
 
-.booth-settings-toggle { display: none; }
+.booth-settings-toggle {
+  position: static;
+  z-index: auto;
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  justify-self: end;
+  align-self: center;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: var(--line-ink);
+  border-radius: 999px;
+  background: rgba(255, 249, 244, .96);
+  color: var(--color-ink);
+  padding: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .18);
+  cursor: pointer;
+}
+
+.booth-settings-toggle:focus-visible,
+.booth-fullscreen-toggle:focus-visible,
+.camera-icon-button:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.booth-settings-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 .phone-speaker {
   width: 48px;
@@ -128,13 +134,23 @@
   background: #171419;
 }
 
+.camera-frame-overlay {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
 .camera-shell.mirror-preview .camera-video {
   transform: scaleX(-1);
 }
 
 .crop-guide {
   position: absolute;
-  z-index: 1;
+  z-index: 2;
   inset: 50% auto auto 50%;
   width: 76%;
   max-height: 88%;
@@ -145,7 +161,7 @@
 
 .countdown {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   inset: 50% auto auto 50%;
   display: none;
   color: var(--color-white);
@@ -161,7 +177,7 @@
 
 .camera-status {
   position: absolute;
-  z-index: 3;
+  z-index: 5;
   left: 12px;
   right: 12px;
   bottom: 12px;
@@ -173,6 +189,76 @@
   color: var(--color-paper);
   font-size: var(--text-small);
   text-align: center;
+}
+
+.camera-overlay-controls {
+  position: static;
+  z-index: auto;
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+}
+
+.camera-icon-button {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 249, 244, .62);
+  border-radius: 50%;
+  background: rgba(23, 20, 25, .6);
+  color: var(--color-white);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.camera-icon-button:disabled {
+  opacity: .48;
+}
+
+.camera-icon-button.is-active,
+.camera-icon-button.active {
+  border-color: #F2C14E;
+  background: #F2C14E;
+  color: #29252A;
+  opacity: 1;
+}
+
+.camera-icon-button svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.camera-device-control {
+  position: static;
+  flex: 1 0 100%;
+  width: 100%;
+  margin: 0;
+  border: 1px solid rgba(255, 249, 244, .5);
+  background: rgba(23, 20, 25, .78);
+  padding: 5px;
+  color: var(--color-white);
+  font-size: 10px;
+}
+
+.camera-device-control select {
+  width: 100%;
+  min-height: 30px;
+  margin-top: 3px;
+  border: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
 }
 
 .booth-tools {
@@ -216,14 +302,59 @@
 
 .frame-controls {
   grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
+  display: block;
 }
 
 .frame-controls h2 { margin: 0; }
-.frame-controls select { min-width: 0; }
+
+.booth-frame-track {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 8px 0 4px;
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+}
+
+.booth-frame-option {
+  width: 76px;
+  min-width: 76px;
+  min-height: 96px;
+  flex: 0 0 76px;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 4px;
+  border: var(--line-ink);
+  background: var(--color-white);
+  padding: 4px;
+  font-size: 9px;
+  text-align: center;
+  scroll-snap-align: start;
+}
+
+.booth-frame-option.active {
+  background: var(--color-pink);
+  box-shadow: inset 0 -3px var(--color-accent);
+}
+
+.booth-frame-option img {
+  width: 100%;
+  height: 68px;
+  object-fit: cover;
+  object-position: center top;
+  background: #eee3e5;
+}
+
+.booth-frame-option span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-controls .control-label {
+  margin-top: 8px;
+}
 
 .session-controls {
   grid-column: 1 / -1;
@@ -245,21 +376,53 @@
 .capture-controls {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 64px 40px;
+  grid-template-rows: 40px 18px;
   align-items: center;
-  gap: 4px 12px;
+  gap: 2px 8px;
+  padding: 8px 12px;
 }
 
-.capture-controls h2 { grid-column: 1; margin: 0; }
-.capture-controls .capture-progress { grid-column: 1; margin: 0; text-align: left; }
+.capture-controls h2 { display: none; }
+.capture-controls .capture-progress {
+  grid-column: 1;
+  grid-row: 2;
+  min-height: 0;
+  margin: 0;
+  font-size: 9px;
+  text-align: left;
+}
+
 .capture-controls .tool-button {
   grid-column: 2;
   grid-row: 1 / span 2;
-  width: 64px;
-  height: 64px;
+  justify-self: center;
+  align-self: center;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   padding: 4px;
   font-size: var(--text-caption);
+}
+
+.aspect-cycle-button {
+  width: 52px;
+  min-width: 52px;
+  padding: 4px;
+}
+
+.aspect-cycle-button svg {
+  width: 44px;
+  height: 36px;
+}
+
+.aspect-cycle-button text {
+  fill: currentColor;
+  stroke: none;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 800;
+  text-anchor: middle;
+  dominant-baseline: middle;
 }
 
 .phone-home-indicator {
@@ -360,36 +523,27 @@ body.booth-fullscreen-fallback .navigation-dock {
   display: none !important;
 }
 
-.booth-page:fullscreen .booth-heading,
-.booth-page.booth-fullscreen-fallback .booth-heading {
-  min-height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  border: 0;
-  background: #171419;
-  padding: max(4px, env(safe-area-inset-top)) 12px 0;
-}
-
-.booth-page:fullscreen .booth-heading .technical-label,
-.booth-page:fullscreen .booth-heading h1,
-.booth-page.booth-fullscreen-fallback .booth-heading .technical-label,
-.booth-page.booth-fullscreen-fallback .booth-heading h1 {
-  display: none;
-}
-
 .booth-page:fullscreen .booth-fullscreen-toggle,
 .booth-page.booth-fullscreen-fallback .booth-fullscreen-toggle {
-  min-height: 34px;
+  position: fixed;
+  z-index: 1003;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  display: grid;
+  place-items: center;
   border-color: #6C6870;
   background: #29252A;
   color: var(--color-white);
+  padding: 8px;
 }
 
 .booth-page:fullscreen .booth-board,
 .booth-page.booth-fullscreen-fallback .booth-board {
   width: 100%;
-  height: calc(100dvh - 42px);
+  height: 100dvh;
   min-height: 0;
   padding: 0;
 }
@@ -402,7 +556,7 @@ body.booth-fullscreen-fallback .navigation-dock {
   max-height: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: 22px minmax(0, 1fr) minmax(0, 30dvh) 52px 8px;
+  grid-template-rows: 22px minmax(0, 1fr) minmax(0, 30dvh) 72px 8px;
   grid-template-areas:
     "hardware"
     "stage"
@@ -444,6 +598,18 @@ body.booth-fullscreen-fallback .navigation-dock {
   border-top: var(--line-ink);
 }
 
+.booth-phone.settings-collapsed .booth-tools { display: none; }
+
+.booth-page:fullscreen .booth-phone.settings-collapsed,
+.booth-page.booth-fullscreen-fallback .booth-phone.settings-collapsed {
+  grid-template-rows: 22px minmax(0, 1fr) 72px 8px;
+  grid-template-areas:
+    "hardware"
+    "stage"
+    "capture"
+    "indicator";
+}
+
 .booth-page:fullscreen .tool-section,
 .booth-page.booth-fullscreen-fallback .tool-section { grid-column: 1 / -1; }
 
@@ -451,6 +617,15 @@ body.booth-fullscreen-fallback .navigation-dock {
 .booth-page.booth-fullscreen-fallback .capture-controls {
   grid-area: capture;
   min-width: 0;
+  min-height: 0;
+  align-items: center;
+}
+
+.booth-page:fullscreen .capture-controls .tool-button,
+.booth-page.booth-fullscreen-fallback .capture-controls .tool-button {
+  width: 56px;
+  height: 56px;
+  min-height: 56px;
 }
 
 .booth-page:fullscreen .phone-home-indicator,
@@ -463,27 +638,19 @@ body.booth-fullscreen-fallback .navigation-dock {
   .booth-page:fullscreen .booth-phone,
   .booth-page.booth-fullscreen-fallback .booth-phone {
     grid-template-columns: minmax(0, 1.3fr) minmax(280px, .8fr);
-    grid-template-rows: 24px minmax(0, 1fr) 52px 8px;
+    grid-template-rows: 24px minmax(0, 1fr) 60px 8px;
     grid-template-areas:
-      "hardware settings-toggle"
+      "hardware hardware"
       "stage tools"
       "capture tools"
       "indicator indicator";
   }
 
-  .booth-page:fullscreen .booth-settings-toggle,
-  .booth-page.booth-fullscreen-fallback .booth-settings-toggle {
-    grid-area: settings-toggle;
-    width: auto;
-    min-height: 28px;
-    display: block;
-    align-self: center;
-    margin: 0 8px;
-    border: var(--line-ink);
-    border-radius: 999px;
-    background: var(--color-paper);
-    color: var(--color-ink);
-    font-size: 11px;
+  .booth-page:fullscreen .capture-controls .tool-button,
+  .booth-page.booth-fullscreen-fallback .capture-controls .tool-button {
+    width: 52px;
+    height: 52px;
+    min-height: 52px;
   }
 
   .booth-page:fullscreen .booth-tools,
@@ -510,13 +677,9 @@ body.booth-fullscreen-fallback .navigation-dock {
 
   .booth-page:fullscreen .booth-phone.settings-collapsed .booth-settings-toggle,
   .booth-page.booth-fullscreen-fallback .booth-phone.settings-collapsed .booth-settings-toggle {
-    position: absolute;
-    z-index: 4;
-    top: 31px;
-    right: 8px;
-    margin: 0;
-    background: rgba(255, 249, 244, .94);
-    padding-inline: 10px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
   }
 }
 

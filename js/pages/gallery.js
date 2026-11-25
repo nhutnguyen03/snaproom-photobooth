@@ -4,15 +4,6 @@ export function renderGallery() {
   const page = document.createElement("section");
   page.className = "gallery-page";
 
-  const heading = document.createElement("header");
-  heading.className = "gallery-heading";
-  const label = document.createElement("p");
-  label.className = "technical-label";
-  label.textContent = "GALLERY / local archive";
-  const title = document.createElement("h1");
-  title.textContent = "Khoảnh khắc của bạn.";
-  heading.append(label, title);
-
   const toolbar = document.createElement("div");
   toolbar.className = "gallery-toolbar";
   const searchLabel = document.createElement("label");
@@ -56,7 +47,7 @@ export function renderGallery() {
   const grid = document.createElement("div");
   grid.className = "gallery-grid";
 
-  page.append(heading, toolbar, status, grid);
+  page.append(toolbar, status, grid);
 
   let projects = [];
   let photos = [];
